@@ -1,0 +1,12 @@
+2026/05/26-00:13:44.686 610c Reusing MANIFEST C:\Users\vahar\OneDrive\Desktop\pr\DDGRS\DDGRS FINAL\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/26-00:13:44.687 610c Recovering log #13
+2026/05/26-00:13:44.723 610c Reusing old log C:\Users\vahar\OneDrive\Desktop\pr\DDGRS\DDGRS FINAL\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000013.log 
+2026/05/26-00:14:07.074 5a34 Level-0 table #18: started
+2026/05/26-00:14:07.128 5a34 Level-0 table #18: 1605480 bytes OK
+2026/05/26-00:14:07.131 5a34 Delete type=0 #13
+2026/05/26-00:14:10.669 5a34 Compacting 1@1 + 1@2 files
+2026/05/26-00:14:10.731 5a34 Generated table #19@1: 34997 keys, 1820489 bytes
+2026/05/26-00:14:10.731 5a34 Compacted 1@1 + 1@2 files => 1820489 bytes
+2026/05/26-00:14:10.732 5a34 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/05/26-00:14:10.732 5a34 Delete type=2 #15
+2026/05/26-00:14:10.732 5a34 Delete type=2 #18
