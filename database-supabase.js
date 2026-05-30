@@ -62,6 +62,7 @@ class SupabaseDatabase {
                     toEmail: member.email,
                     toName: member.name,
                     grievanceId: result.grievance_id,
+                    grievanceUUID: result.id,
                     submittedBy: data.isAnonymous ? 'Anonymous' : (data.userName || data.userId || 'Unknown'),
                     submittedDate: result.created_at
                 });

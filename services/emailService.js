@@ -22,10 +22,11 @@ const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://your-admin-dashboard
  * @param {string} params.toEmail       - Recipient email
  * @param {string} params.toName        - Recipient name
  * @param {string} params.grievanceId   - Public grievance ID (e.g. GRV-0042)
+ * @param {string} params.grievanceUUID - Internal UUID for direct dashboard link
  * @param {string} params.submittedBy   - 'Anonymous' or student name
  * @param {string} params.submittedDate - ISO date string
  */
-async function sendAssignmentEmail({ toEmail, toName, grievanceId, submittedBy, submittedDate }) {
+async function sendAssignmentEmail({ toEmail, toName, grievanceId, grievanceUUID, submittedBy, submittedDate }) {
     const formattedDate = new Date(submittedDate).toLocaleString('en-IN', {
         dateStyle: 'medium',
         timeStyle: 'short'
@@ -76,7 +77,7 @@ async function sendAssignmentEmail({ toEmail, toName, grievanceId, submittedBy, 
         </div>
       </div>
       <p>Please log in to the dashboard to view full details and take appropriate action.</p>
-      <a href="${DASHBOARD_URL}" class="btn">Open Dashboard →</a>
+      <a href="${DASHBOARD_URL}/grievances/${grievanceUUID}" class="btn">View Grievance →</a>
     </div>
     <div class="footer">
       <p>This is an automated notification from the DDGRS Grievance Management System. Do not reply to this email.</p>

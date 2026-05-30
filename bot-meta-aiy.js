@@ -6,6 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 if (!globalThis.WebSocket) globalThis.WebSocket = ws.WebSocket || ws;
 const Database = require('./database-supabase');
+const { saveFeedback } = require('./services/feedbackService');
 
 const app = express();
 const db = new Database();
@@ -21,6 +22,13 @@ const supabaseStorage = createClient(
 );
 
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+});
 
 // Health check
 app.get('/', (_req, res) => res.status(200).send('DDGRS Bot is running ✅'));
@@ -210,7 +218,9 @@ app.post('/webhook', async (req, res) => {
     if (isImage && session.step === 'image') {
         await sendMessage(userId, '⏳ Uploading your image...');
         const tempId = `TEMP_${Date.now()}`;
+        console.log(`[image] Downloading mediaId: ${mediaId}`);
         const imageUrl = await downloadAndUploadMedia(mediaId, tempId);
+        console.log(`[image] Upload result: ${imageUrl}`);
         if (imageUrl) {
             session.imageUrl = imageUrl;
             session.step = 'confirm';
@@ -393,6 +403,28 @@ app.post('/webhook', async (req, res) => {
                     getCategoryMenuText();
             }
 
+        } else if (session.step === 'feedback_rating') {
+            const rating = parseInt(userMessage);
+            if (isNaN(rating) || rating < 1 || rating > 5) {
+                responseMessage = '❌ Please reply with a number between 1 and 5.';
+            } else {
+                session.feedbackRating = rating;
+                session.step = 'feedback_comments';
+                responseMessage = '💬 Any additional comments? (Type "skip" to finish)';
+            }
+
+        } else if (session.step === 'feedback_comments') {
+            const comments = userMessage.toLowerCase() === 'skip' ? '' : userMessage;
+            try {
+                await saveFeedback(session.feedbackGrievanceId, userId, session.feedbackRating, comments);
+            } catch (e) {
+                console.error('Feedback save error:', e.message);
+            }
+            userSessions.delete(userId);
+            responseMessage =
+                '✅ Thank you for your feedback! It helps us improve.\n\n' +
+                'Type "start" to submit a new grievance.';
+
         } else {
             userSessions.delete(userId);
             responseMessage = 'Type "start" to submit a grievance, or send your Grievance ID to check status.';
@@ -414,14 +446,40 @@ app.post('/notify', async (req, res) => {
         const grievance = await db.getGrievanceById(grievanceId);
         if (!grievance) return res.status(404).json({ error: 'Grievance not found' });
         const rawUserId = grievance.user_id;
+        console.log(`[notify] grievanceId=${grievanceId} newStatus="${newStatus}" rawUserId=${rawUserId}`);
         if (!rawUserId || rawUserId === 'Anonymous') return res.status(200).json({ message: 'Anonymous — skipped' });
         const phone = rawUserId.replace(/\D/g, '');
-        const message =
-            `📢 Update on your grievance ${grievanceId}\n\n` +
-            `Status: ${newStatus || 'Updated'}\n` +
-            `Remarks: ${remarks}\nBy: ${adminName || 'Admin'}\n\n` +
-            `Send "${grievanceId}" to check full status.`;
-        await sendMessage(phone, message);
+        console.log(`[notify] phone=${phone}`);
+
+        if (newStatus === 'Resolved') {
+            // Send feedback request instead of plain update
+            const message =
+                `✅ Your grievance *${grievanceId}* has been resolved!\n\n` +
+                `Remarks: ${remarks}\nBy: ${adminName || 'Admin'}\n\n` +
+                `⭐ We'd love your feedback!\n` +
+                `How satisfied are you with the resolution?\n\n` +
+                `Reply with a number:\n` +
+                `1 - Very Dissatisfied\n` +
+                `2 - Dissatisfied\n` +
+                `3 - Neutral\n` +
+                `4 - Satisfied\n` +
+                `5 - Very Satisfied`;
+            await sendMessage(phone, message);
+
+            // Set feedback session for this user
+            userSessions.set(phone, {
+                step: 'feedback_rating',
+                feedbackGrievanceId: grievanceId
+            });
+        } else {
+            const message =
+                `📢 Update on your grievance ${grievanceId}\n\n` +
+                `Status: ${newStatus || 'Updated'}\n` +
+                `Remarks: ${remarks}\nBy: ${adminName || 'Admin'}\n\n` +
+                `Send "${grievanceId}" to check full status.`;
+            await sendMessage(phone, message);
+        }
+
         res.status(200).json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });

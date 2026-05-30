@@ -30,3 +30,13 @@ ALTER TABLE grievances
 --     ('Member One',   'member1@college.edu', 1),
 --     ('Member Two',   'member2@college.edu', 2),
 --     ('Member Three', 'member3@college.edu', 3);
+
+-- ─── STEP 5: Feedback table ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS grievance_feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    grievance_id TEXT NOT NULL,         -- public GRV-XXXXXX id
+    user_phone TEXT NOT NULL,
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    comments TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
