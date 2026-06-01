@@ -1,33 +1,49 @@
 /**
  * emailService.js
- * Sends email notifications via Gmail using Nodemailer.
- * Does NOT include grievance content — only ID, submitter, and date.
+ * Sends emails via Gmail API (OAuth2) — works on Render free tier.
+ * Uses HTTPS instead of SMTP, so no port blocking issues.
  */
 
-const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    family: 4, // force IPv4
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-    }
-});
+const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://ddgrsfinalfinal.vercel.app';
 
-const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://your-admin-dashboard.com';
+// OAuth2 client setup
+function getOAuth2Client() {
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GMAIL_CLIENT_ID,
+        process.env.GMAIL_CLIENT_SECRET,
+        'https://developers.google.com/oauthplayground'
+    );
+    oauth2Client.setCredentials({
+        refresh_token: process.env.GMAIL_REFRESH_TOKEN
+    });
+    return oauth2Client;
+}
+
+/**
+ * Encode email as base64 for Gmail API
+ */
+function makeEmailBody(to, from, subject, htmlBody) {
+    const message = [
+        `From: "DDGRS Grievance System" <${from}>`,
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=UTF-8',
+        '',
+        htmlBody
+    ].join('\n');
+
+    return Buffer.from(message)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
 
 /**
  * Sends assignment notification email to the assigned member.
- * @param {object} params
- * @param {string} params.toEmail       - Recipient email
- * @param {string} params.toName        - Recipient name
- * @param {string} params.grievanceId   - Public grievance ID (e.g. GRV-0042)
- * @param {string} params.grievanceUUID - Internal UUID for direct dashboard link
- * @param {string} params.submittedBy   - 'Anonymous' or student name
- * @param {string} params.submittedDate - ISO date string
  */
 async function sendAssignmentEmail({ toEmail, toName, grievanceId, grievanceUUID, submittedBy, submittedDate }) {
     const formattedDate = new Date(submittedDate).toLocaleString('en-IN', {
@@ -59,12 +75,10 @@ async function sendAssignmentEmail({ toEmail, toName, grievanceId, grievanceUUID
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>📋 New Grievance Assigned</h1>
-    </div>
+    <div class="header"><h1>📋 New Grievance Assigned</h1></div>
     <div class="body">
       <p>Dear <strong>${toName}</strong>,</p>
-      <p>A new grievance has been assigned to you. Please review it on the admin dashboard at your earliest convenience.</p>
+      <p>A new grievance has been assigned to you. Please review it on the admin dashboard.</p>
       <div class="info-box">
         <div class="info-row">
           <div class="info-label">Grievance ID</div>
@@ -79,21 +93,28 @@ async function sendAssignmentEmail({ toEmail, toName, grievanceId, grievanceUUID
           <div class="info-value">${formattedDate}</div>
         </div>
       </div>
-      <p>Please log in to the dashboard to view full details and take appropriate action.</p>
       <a href="${DASHBOARD_URL}/grievances/${grievanceUUID}" class="btn">View Grievance →</a>
     </div>
     <div class="footer">
-      <p>This is an automated notification from the DDGRS Grievance Management System. Do not reply to this email.</p>
+      <p>Automated notification from DDGRS Grievance Management System. Do not reply.</p>
     </div>
   </div>
 </body>
 </html>`;
 
-    await transporter.sendMail({
-        from: `"DDGRS Grievance System" <${process.env.GMAIL_USER}>`,
-        to: toEmail,
-        subject: `[DDGRS] New Grievance Assigned: ${grievanceId}`,
+    const auth = getOAuth2Client();
+    const gmail = google.gmail({ version: 'v1', auth });
+
+    const raw = makeEmailBody(
+        toEmail,
+        process.env.GMAIL_USER,
+        `[DDGRS] New Grievance Assigned: ${grievanceId}`,
         html
+    );
+
+    await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: { raw }
     });
 
     console.log(`📧 Email sent to ${toEmail} for grievance ${grievanceId}`);
