@@ -46,10 +46,9 @@ class SupabaseDatabase {
             }
         }
 
-        // Direct image URL from WhatsApp bot
-        if (data.imageUrl) {
-            grievanceData.image_url = data.imageUrl;
-        }
+        // Direct image/video URL from WhatsApp bot
+        if (data.imageUrl) grievanceData.image_url = data.imageUrl;
+        if (data.videoUrl) grievanceData.video_url = data.videoUrl;
 
         const { data: result, error } = await supabase.from('grievances').insert([grievanceData]).select().single();
         if (error) throw error;

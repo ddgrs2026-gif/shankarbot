@@ -59,22 +59,27 @@ async function sendMessage(to, text) {
 }
 
 // ─── Download media from Meta and upload to Supabase ──────────────────────
-async function downloadAndUploadMedia(mediaId, grievanceId) {
+async function downloadAndUploadMedia(mediaId, grievanceId, mediaType = 'image') {
     try {
         const { data: mediaInfo } = await axios.get(
             `https://graph.facebook.com/v19.0/${mediaId}`,
             { headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` } }
         );
-        const { data: imageBuffer, headers } = await axios.get(mediaInfo.url, {
+        const { data: buffer, headers } = await axios.get(mediaInfo.url, {
             headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` },
             responseType: 'arraybuffer'
         });
-        const mimeType = headers['content-type'] || 'image/jpeg';
-        const ext = mimeType.includes('png') ? 'png' : mimeType.includes('gif') ? 'gif' : 'jpg';
+        const mimeType = headers['content-type'] || (mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
+        let ext = 'jpg';
+        if (mimeType.includes('png')) ext = 'png';
+        else if (mimeType.includes('gif')) ext = 'gif';
+        else if (mimeType.includes('mp4')) ext = 'mp4';
+        else if (mimeType.includes('3gp')) ext = '3gp';
+        else if (mimeType.includes('video')) ext = 'mp4';
         const fileName = `grievances/${grievanceId}_${Date.now()}.${ext}`;
         const { error } = await supabaseStorage.storage
             .from('grievance-media')
-            .upload(fileName, Buffer.from(imageBuffer), { contentType: mimeType, upsert: true });
+            .upload(fileName, Buffer.from(buffer), { contentType: mimeType, upsert: true });
         if (error) throw error;
         const { data } = supabaseStorage.storage.from('grievance-media').getPublicUrl(fileName);
         return data.publicUrl;
@@ -172,7 +177,7 @@ function buildSummary(session) {
     }
 
     summary += `Grievance: ${session.grievance}\n`;
-    summary += `Image: ${session.imageUrl ? '✅ Attached' : '❌ None'}\n`;
+    summary += `Media: ${session.imageUrl ? '✅ Image attached' : session.videoUrl ? '✅ Video attached' : '❌ None'}\n`;
     return summary;
 }
 
@@ -189,7 +194,10 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
     const userId = msg.from;
     const userMessage = msg.text?.body?.trim() || '';
     const isImage = msg.type === 'image';
-    const mediaId = isImage ? msg.image?.id : null;
+    const isVideo = msg.type === 'video';
+    const isMedia = isImage || isVideo;
+    const mediaId = isImage ? msg.image?.id : isVideo ? msg.video?.id : null;
+    const mediaType = isImage ? 'image' : isVideo ? 'video' : null;
 
     console.log(`Message from ${userId}: ${userMessage || '[image]'}`);
 
@@ -225,27 +233,28 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
         return;
     }
     const session = userSessions.get(userId);
-    if (isImage && session.step === 'image') {
-        await sendMessage(userId, '⏳ Uploading your image...');
+    if (isMedia && session.step === 'image') {
+        await sendMessage(userId, '⏳ Uploading your file...');
         const tempId = `TEMP_${Date.now()}`;
-        console.log(`[image] Downloading mediaId: ${mediaId}`);
-        const imageUrl = await downloadAndUploadMedia(mediaId, tempId);
-        console.log(`[image] Upload result: ${imageUrl}`);
-        if (imageUrl) {
-            session.imageUrl = imageUrl;
+        console.log(`[media] Downloading mediaId: ${mediaId} type: ${mediaType}`);
+        const mediaUrl = await downloadAndUploadMedia(mediaId, tempId, mediaType);
+        console.log(`[media] Upload result: ${mediaUrl}`);
+        if (mediaUrl) {
+            session.imageUrl = mediaType === 'image' ? mediaUrl : null;
+            session.videoUrl = mediaType === 'video' ? mediaUrl : null;
             session.step = 'confirm';
             await sendMessage(userId,
                 buildSummary(session) +
                 '\nType "confirm" to submit, "change" to edit category, or "cancel" to restart.'
             );
         } else {
-            await sendMessage(userId, '❌ Failed to upload image. Send again or type "skip" to continue without one.');
+            await sendMessage(userId, '❌ Failed to upload file. Send again or type "skip" to continue without one.');
         }
         return;
     }
 
-    if (isImage && session.step !== 'image') {
-        await sendMessage(userId, '📷 Image received but not expected at this step. Please follow the conversation flow.');
+    if (isMedia && session.step !== 'image') {
+        await sendMessage(userId, '📎 File received but not expected at this step. Please follow the conversation flow.');
         return;
     }
 
@@ -347,19 +356,20 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
             session.step = 'image';
             responseMessage =
                 '✅ Grievance noted.\n\n' +
-                '📷 Do you want to attach an image as evidence?\n\n' +
-                'Send an image now, or type "skip" to continue without one.';
+                '📎 Do you want to attach evidence?\n\n' +
+                'Send an image or video, or type "skip" to continue without one.';
 
         // ── STEP: image ───────────────────────────────────────────────────
         } else if (session.step === 'image') {
             if (userMessage.toLowerCase() === 'skip') {
                 session.imageUrl = null;
+                session.videoUrl = null;
                 session.step = 'confirm';
                 responseMessage =
                     buildSummary(session) +
                     '\nType "confirm" to submit, "change" to edit category, or "cancel" to restart.';
             } else {
-                responseMessage = '📷 Please send an image or type "skip" to continue without one.';
+                responseMessage = '📎 Please send an image or video, or type "skip" to continue without one.';
             }
 
         // ── STEP: confirm ─────────────────────────────────────────────────
@@ -396,7 +406,8 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
                     userRole: isMandatory ? `Year ${session.userYear}` : null,
                     userDept: session.userIdNo || null,
                     mediaUrls: '[]',
-                    imageUrl: session.imageUrl || null
+                    imageUrl: session.imageUrl || null,
+                    videoUrl: session.videoUrl || null
                 });
                 responseMessage =
                     `✅ Grievance submitted successfully!\n\n` +
