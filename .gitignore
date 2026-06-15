@@ -11,6 +11,10 @@ node_modules/
 admin-panel/node_modules/
 admin-panel-ayi/node_modules/
 
+# WhatsApp Web cache — never commit
+.wwebjs_auth/
+.wwebjs_cache/
+
 # Env files — never commit secrets
 .env
 admin-panel/.env

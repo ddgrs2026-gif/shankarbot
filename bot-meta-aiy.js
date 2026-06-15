@@ -42,8 +42,25 @@ const webhookLimiter = rateLimit({
     message: 'Too many requests'
 });
 
-// Health check
-app.get('/', (_req, res) => res.status(200).send('DDGRS Bot is running ✅'));
+// Health check + static admin panel serving
+const path = require('path');
+const fs = require('fs');
+const publicPath = path.join(__dirname, 'public');
+
+app.use(require('express').static(publicPath));
+
+app.get('/', (_req, res) => {
+    const indexPath = path.join(publicPath, 'index.html');
+    if (fs.existsSync(indexPath)) res.sendFile(indexPath);
+    else res.status(200).send('DDGRS Bot is running ✅');
+});
+
+// SPA fallback for admin panel routes
+app.get(/^(?!\/(webhook|notify)).*$/, (_req, res, next) => {
+    const indexPath = path.join(publicPath, 'index.html');
+    if (fs.existsSync(indexPath)) res.sendFile(indexPath);
+    else next();
+});
 
 // ─── Send text message ─────────────────────────────────────────────────────
 async function sendMessage(to, text) {

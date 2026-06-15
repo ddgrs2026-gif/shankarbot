@@ -1,0 +1,10 @@
+node_modules/
+admin-panel/node_modules/
+admin-panel-ayi/
+.wwebjs_auth/
+.wwebjs_cache/
+.env
+admin-panel/.env
+.git/
+stress-test.js
+*.log
