@@ -1,7 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 const { assignGrievance } = require('./services/assignmentService');
-const { sendAssignmentEmail } = require('./services/emailService');
+const { sendAssignmentEmail, sendPrincipalNotificationEmail } = require('./services/emailService');
 
 // Polyfill WebSocket for Node.js 20
 if (!globalThis.WebSocket) {
@@ -66,6 +66,14 @@ class SupabaseDatabase {
                     submittedDate: result.created_at
                 });
             }
+            // Notify principal
+            await sendPrincipalNotificationEmail({
+                grievanceId: result.grievance_id,
+                grievanceUUID: result.id,
+                category: grievanceData.category,
+                submittedBy: data.isAnonymous ? 'Anonymous' : (data.userName || data.userId || 'Unknown'),
+                submittedDate: result.created_at
+            });
         } catch (assignErr) {
             // Non-fatal: log but don't block grievance submission
             console.error('Assignment/email error:', assignErr.message);
