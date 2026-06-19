@@ -120,4 +120,4 @@ async function sendAssignmentEmail({ toEmail, toName, grievanceId, grievanceUUID
     console.log(`📧 Email sent to ${toEmail} for grievance ${grievanceId}`);
 }
 
-module.exports = { sendAssignmentEmail };
+module.exports = { sendAssignmentEmail, sendReplyNotificationEmail, sendPrincipalNotificationEmail };
