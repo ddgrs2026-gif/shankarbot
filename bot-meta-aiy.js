@@ -24,6 +24,7 @@ const supabaseStorage = createClient(
 
 const rateLimit = require('express-rate-limit');
 
+app.set('trust proxy', 1); // Trust Render/proxy headers
 app.use(bodyParser.json());
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
