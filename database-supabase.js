@@ -107,12 +107,22 @@ class SupabaseDatabase {
     async markResponseSent(id) { return Promise.resolve(); }
 
     mapDepartmentToCategory(department) {
+        // Handle new format: "Academics - Teaching", "Behavioral - Bullying", etc.
+        const main = department.split(' - ')[0].trim();
         const mapping = {
-            'Academic': 'Academic', 'Hostel': 'Hostel', 'Faculty': 'Academic',
-            'Infrastructure': 'Infrastructure', 'IT Cell': 'IT Cell',
-            'Maintenance': 'Maintenance', 'Transport': 'Transport', 'Accounts': 'Accounts'
+            'Academics': 'Academic',
+            'Academic': 'Academic',
+            'Behavioral': 'Discipline / Harassment',
+            'Facilities': 'Infrastructure',
+            'Campus': 'Infrastructure',
+            'Office and Administration': 'Administration',
+            'Hostel': 'Hostel',
+            'Faculty': 'Academic',
+            'Infrastructure': 'Infrastructure',
+            'IT Cell': 'IT / Network',
+            'Library': 'Library',
         };
-        return mapping[department] || 'Other';
+        return mapping[main] || 'Other';
     }
 }
 
