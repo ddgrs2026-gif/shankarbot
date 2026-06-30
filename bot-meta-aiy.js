@@ -246,8 +246,12 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
     }
 
     if (!userSessions.has(userId)) {
-        userSessions.set(userId, { step: 'disclaimer' });
-        await sendMessage(userId, DISCLAIMER);
+        if (userMessage.toLowerCase() === 'namaste') {
+            userSessions.set(userId, { step: 'disclaimer' });
+            await sendMessage(userId, '🙏 Namaste!\n\n' + DISCLAIMER);
+        } else {
+            await sendMessage(userId, '🙏 Please send "Namaste" to begin.');
+        }
         return;
     }
     const session = userSessions.get(userId);
@@ -284,7 +288,7 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
         // ── STEP: disclaimer ──────────────────────────────────────────────
         if (userMessage.toLowerCase() === 'start') {
             session.step = 'disclaimer';
-            responseMessage = DISCLAIMER;
+            responseMessage = '🙏 Namaste!\n\n' + DISCLAIMER;
 
         } else if (session.step === 'disclaimer') {
             if (userMessage.toLowerCase() === 'i agree') {
@@ -393,8 +397,28 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
         // ── STEP: confirm ─────────────────────────────────────────────────
         } else if (session.step === 'confirm') {
             if (userMessage.toLowerCase() === 'confirm') {
-                session.step = 'any_changes';
-                responseMessage = '🔍 Before submitting — do you want to make any changes?\n\nType "no" to submit now, or describe what you want to change.';
+                // Submit grievance directly
+                const isMandatory = MANDATORY_DETAIL_CATEGORIES.includes(session.categoryName);
+                const displayUserId = session.isAnonymous ? 'Anonymous' : userId;
+                const grievanceId = await db.addGrievance({
+                    userId: displayUserId,
+                    department: session.department,
+                    grievance: session.grievance,
+                    status: 'Submitted',
+                    isAnonymous: session.isAnonymous,
+                    userName: session.userName || null,
+                    userRole: isMandatory ? `Year ${session.userYear}` : null,
+                    userDept: session.userIdNo || null,
+                    mediaUrls: '[]',
+                    imageUrl: session.imageUrl || null,
+                    videoUrl: session.videoUrl || null
+                });
+                responseMessage =
+                    `✅ Grievance submitted successfully!\n\n` +
+                    `Your Grievance ID: *${grievanceId}*\n\n` +
+                    `To check status anytime, just send your Grievance ID (e.g. ${grievanceId})\n\n` +
+                    `Send "Namaste" to submit another grievance.`;
+                userSessions.delete(userId);
 
             } else if (userMessage.toLowerCase() === 'change') {
                 session.step = 'category';
@@ -402,7 +426,7 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
 
             } else if (userMessage.toLowerCase() === 'cancel') {
                 userSessions.delete(userId);
-                responseMessage = '❌ Cancelled. Type "start" to begin again.';
+                responseMessage = '❌ Cancelled. Send "Namaste" to begin again.';
 
             } else {
                 responseMessage = 'Please type "confirm", "change", or "cancel".';
