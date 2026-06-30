@@ -77,11 +77,11 @@ export default function Dashboard() {
   if (isLoading) return <div className="p-8 text-gray-900 dark:text-white">Loading...</div>
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Total Grievances', value: stats.total, color: 'text-gray-900 dark:text-white', path: '/grievances', sub: 'Click to view all' },
           { label: 'Pending', value: stats.pending, color: 'text-yellow-600 dark:text-yellow-400', path: '/grievances?status=pending', sub: 'Click to view pending' },
@@ -101,7 +101,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Category Distribution</h2>
           {categoryData.length > 0 ? (
@@ -141,7 +141,7 @@ export default function Dashboard() {
       {/* Category Grid */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Categories</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((category) => (
             <div
               key={category}

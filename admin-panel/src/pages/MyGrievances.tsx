@@ -58,7 +58,7 @@ export default function MyGrievances() {
   if (loading) return <div className="p-8 text-gray-900 dark:text-white">Loading...</div>
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">My Grievances</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Assigned to: {adminName || 'You'}</p>
 
@@ -78,6 +78,7 @@ export default function MyGrievances() {
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -112,6 +113,7 @@ export default function MyGrievances() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

@@ -48,7 +48,7 @@ export default function Feedback() {
   if (loading) return <div className="p-8 text-gray-900 dark:text-white">Loading...</div>
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Student Feedback</h1>
 
       {/* Stats */}
@@ -69,7 +69,7 @@ export default function Feedback() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Rating distribution chart */}
         <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Rating Distribution</h2>
@@ -111,6 +111,7 @@ export default function Feedback() {
 
       {/* Feedback table */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -138,6 +139,7 @@ export default function Feedback() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

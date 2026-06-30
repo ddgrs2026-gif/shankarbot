@@ -331,7 +331,7 @@ export default function GrievanceDetail() {
   ]
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{grievance.grievance_id}</h1>

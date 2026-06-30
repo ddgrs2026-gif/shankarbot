@@ -208,11 +208,11 @@ export default function Reports() {
   if (isLoading) return <div className="p-8">Loading...</div>
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Reports</h1>
 
       {/* ── Download Section ── */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* By time period */}
         <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Download by Time Period</h2>
@@ -253,7 +253,7 @@ export default function Reports() {
       </div>
 
       {/* ── Charts ── */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Category Distribution</h2>
           {categoryData.length > 0 ? (
@@ -285,7 +285,7 @@ export default function Reports() {
       </div>
 
       {/* ── Summary Stats ── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total', value: grievances.length, color: 'text-gray-900 dark:text-white' },
           { label: 'Active', value: grievances.filter(g => !['Resolved','Closed','Rejected'].includes(g.status)).length, color: 'text-blue-600' },

@@ -89,7 +89,7 @@ export default function GrievanceList() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{getFilterTitle()}</h1>
@@ -105,6 +105,7 @@ export default function GrievanceList() {
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -148,6 +149,7 @@ export default function GrievanceList() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
